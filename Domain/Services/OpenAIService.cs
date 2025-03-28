@@ -126,6 +126,7 @@ Make a lil fun and harmless description about every author.
       return sb.ToString();
     }
 
+
     private string Sanitize(string input) =>
         input.Replace("\r", "").Replace("\n", " ").Trim();
 
