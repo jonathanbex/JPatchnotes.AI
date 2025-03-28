@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35919.96 d17.13
+VisualStudioVersion = 17.13.35919.96
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Patchnotes.AI", "Patchnotes.AI.csproj", "{E5689FA3-6759-47B4-8C78-3F8AFA8F67BB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "..\Domain\Domain.csproj", "{AE262F24-B40A-4027-A65E-390AC1A6832A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{5A40EC4D-92D5-4F7E-9EEF-F147D5BBD29F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Patchnotes.AI.REST", "..\Patchnotes.AI.REST\Patchnotes.AI.REST.csproj", "{4E2F43B6-C7A3-4EF6-A4A3-7EF2B1D81929}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,12 +27,17 @@ Global
 		{AE262F24-B40A-4027-A65E-390AC1A6832A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AE262F24-B40A-4027-A65E-390AC1A6832A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AE262F24-B40A-4027-A65E-390AC1A6832A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E2F43B6-C7A3-4EF6-A4A3-7EF2B1D81929}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E2F43B6-C7A3-4EF6-A4A3-7EF2B1D81929}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E2F43B6-C7A3-4EF6-A4A3-7EF2B1D81929}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E2F43B6-C7A3-4EF6-A4A3-7EF2B1D81929}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{AE262F24-B40A-4027-A65E-390AC1A6832A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{4E2F43B6-C7A3-4EF6-A4A3-7EF2B1D81929} = {5A40EC4D-92D5-4F7E-9EEF-F147D5BBD29F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {04086C88-537D-44EC-B153-4205A841322F}
