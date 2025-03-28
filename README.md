@@ -1,6 +1,6 @@
 # JPatchnotes.AI
 
-A funky patchnotes generator that analyzes release code-diffs and pull requests to generate whacky patch notes with a dash of humor!
+A funky patchnotes generator that analyzes release code-diffs and pull requests to generate whacky patch notes using ChatGPT with a dash of humor!
 
 ## Features:
 - Analyzes **GitHub pull requests** and **code diffs** to generate release notes.
