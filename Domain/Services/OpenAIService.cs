@@ -39,7 +39,7 @@ namespace Domain.Services
       var instructionHeader = """
 You are a patchnote summarizer. Generate markdown-formatted, categorized release notes based on pull requests and code diffs.
 
-Be professional, but feel free to include a touch of humor or light sarcasm if the situation calls for it. Think like a friendly developer writing patchnotes for other developers.
+Be professional, but feel free to include a touch of humor or light sarcasm if the situation calls for it, memes are also good. Think like a friendly developer writing patchnotes for other developers.
 
 If nothing major changed, say so — but you can do it with a wink.
 
@@ -53,7 +53,15 @@ Use markdown formatting with sections like:
 
 Do **not** make things up. Base everything on the actual content provided.
 
-Keep it fun but informative. Avoid emojis unless absolutely necessary (and even then, be tasteful).
+Keep it fun but informative.
+
+In the end make a summary using the author data using FilesChanged,Additions and Deletions.Stack them like this and remove + and -
+Author (some quick summary of them)
+Files changed : Number
+Additions : number
+Deletions : number
+Make a lil fun and harmless description about every author.
+
 """;
       var userMessage = UserChatMessage.CreateUserMessage(new[]
       {
@@ -84,6 +92,7 @@ Keep it fun but informative. Avoid emojis unless absolutely necessary (and even 
     private string BuildPrompt(ReleasePatchNoteBundle bundle)
     {
       var sb = new System.Text.StringBuilder();
+      sb.AppendLine($"Project `{bundle.RepoName}`, - Project description : {bundle.RepoDescription}`.\n");
       sb.AppendLine($"Release notes for version `{bundle.HeadTag}`, changes since `{bundle.BaseTag}`.\n");
 
       sb.AppendLine("### Pull Requests:");
@@ -107,7 +116,13 @@ Keep it fun but informative. Avoid emojis unless absolutely necessary (and even 
           sb.AppendLine("```");
         }
       }
+      sb.AppendLine("\n### Authors:");
 
+      foreach (var author in bundle.AuthorCodeHistories.OrderByDescending(x => x.Additions - x.Deletions))
+      {
+        sb.AppendLine($"#### {author.Name} (Files changed : {author.FilesChanged}, {author.Additions}+ / {author.Deletions}-)");
+        
+      }
       return sb.ToString();
     }
 

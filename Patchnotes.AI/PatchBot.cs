@@ -65,7 +65,7 @@ namespace Patchnotes.AI
       try
       {
         var patchData = await _githubService.GeneratePatchData(owner, repo);
-        await _openAIService.GeneratePatchNotesAsync(patchData);
+        var patchNotes = await _openAIService.GeneratePatchNotesAsync(patchData);
       }
       catch (Exception ex)
       {

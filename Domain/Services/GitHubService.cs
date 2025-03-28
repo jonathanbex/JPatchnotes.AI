@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Azure.Core.HttpHeader;
 
 namespace Domain.Services
 {
@@ -49,7 +50,7 @@ namespace Domain.Services
 
       var defaultBranch = repoInfo.DefaultBranch;
 
-      var headTag = release?.TagName;
+      var headTag = release?.TagName ?? defaultBranch;
 
 
       var previousReleases = await _githubClient.Repository.Release.GetAll(owner, repo);
@@ -71,8 +72,9 @@ namespace Domain.Services
         dataFromFirstCommit = true;
       }
 
-
+      //gets diff between tags for filechanges
       var compare = await _githubClient.Repository.Commit.Compare(owner, repo, baseTag, headTag);
+      //get sha for the commits, will be used later to fetch author info and changes connected to each author
       var commitShas = compare.Commits.Select(c => c.Sha).ToHashSet();
 
       var allPrs = await _githubClient.Repository.PullRequest.GetAllForRepository(owner, repo,
@@ -118,6 +120,7 @@ namespace Domain.Services
         }
       }
 
+      var authorCodeHistories = new List<AuthorCodeHistory>();
       // Get all file diffs between baseTag and main (raw code changes)
       var diffFiles = compare.Files
           .Where(f => !string.IsNullOrWhiteSpace(f.Patch))
@@ -131,29 +134,85 @@ namespace Domain.Services
           })
           .ToList();
 
+      //need data from first commit from baseTag. 
       if (dataFromFirstCommit)
       {
         var firstCommitPatch = await _githubClient.Repository.Commit.Get(owner, repo, baseTag);  // Fetch the patch for the first commit
         var firstCommitFiles = firstCommitPatch.Files.Select(f => new FileChangeSummary
         {
           FileName = f.Filename,
-          Status = "Added", 
+          Status = "Added",
           Additions = f.Additions,
           Deletions = f.Deletions,
-          Patch = f.Patch
+          Patch = f.Patch,
         }).ToList();
 
-     
-        diffFiles.InsertRange(0, firstCommitFiles); 
+        foreach (var commit in firstCommitPatch.Files)
+        {
+          string authorName = firstCommitPatch.Author.Login;
+
+
+          int additions = commit.Additions;
+          int deletions = commit.Deletions;
+
+          // Update the author's commit history
+          AddOrUpdateAuthorHistory(authorCodeHistories, authorName, 1, additions, deletions);
+        }
+        diffFiles.InsertRange(0, firstCommitFiles);
       }
+      int totalCommits = compare.Commits.Count();
+
+
+      foreach (var sha in commitShas.Where(x=> !x.Equals(baseTag)))
+      {
+
+        var fullCommit = await _githubClient.Repository.Commit.Get(owner, repo, sha);
+
+        var author = fullCommit.Author.Login;
+        // Get the commit stats (additions and deletions)
+        var additions = fullCommit.Stats.Additions;
+        var deletions = fullCommit.Stats.Deletions;
+        var filesChanged = fullCommit.Files.Count();
+
+        AddOrUpdateAuthorHistory(authorCodeHistories, author, filesChanged, additions, deletions);
+      }
+
 
       return new ReleasePatchNoteBundle
       {
+        RepoName = repoInfo.Name,
+        RepoDescription = repoInfo.Description,
         BaseTag = baseTag,
         HeadTag = defaultBranch,
         PullRequests = prList,
-        DiffFiles = diffFiles
+        DiffFiles = diffFiles,
+        AuthorCodeHistories = authorCodeHistories,
       };
+    }
+
+    private void AddOrUpdateAuthorHistory(List<AuthorCodeHistory> authorCodeHistories, string authorName, int filesChanged, int additions, int deletions)
+    {
+      // Find the existing author history
+      var existingAuthor = authorCodeHistories.FirstOrDefault(a => a.Name.Equals(authorName, StringComparison.OrdinalIgnoreCase));
+
+      if (existingAuthor != null)
+      {
+        // Update the existing entry
+        existingAuthor.FilesChanged += filesChanged;
+        existingAuthor.Additions += additions;
+        existingAuthor.Deletions += deletions;
+      }
+      else
+      {
+        // If the author doesn't exist, add a new entry
+        authorCodeHistories.Add(new AuthorCodeHistory
+        {
+          Name = authorName,
+          Additions = additions,
+          Deletions = deletions,
+          FilesChanged = filesChanged
+        });
+      }
     }
 
   }
