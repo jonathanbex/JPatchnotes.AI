@@ -59,6 +59,8 @@ namespace Domain.Services
          .FirstOrDefault();
 
       //previous release if it exists
+      bool dataFromFirstCommit = false;
+
       var baseTag = previousRelease?.TagName;
       if (string.IsNullOrEmpty(baseTag))
       {
@@ -66,6 +68,7 @@ namespace Domain.Services
         var commits = await _githubClient.Repository.Commit.GetAll(owner, repo, new CommitRequest { Sha = defaultBranch });
         var firstCommit = commits.Last();  // The first commit is at the end of the list
         baseTag = firstCommit.Sha;
+        dataFromFirstCommit = true;
       }
 
 
@@ -127,6 +130,22 @@ namespace Domain.Services
             Patch = f.Patch
           })
           .ToList();
+
+      if (dataFromFirstCommit)
+      {
+        var firstCommitPatch = await _githubClient.Repository.Commit.Get(owner, repo, baseTag);  // Fetch the patch for the first commit
+        var firstCommitFiles = firstCommitPatch.Files.Select(f => new FileChangeSummary
+        {
+          FileName = f.Filename,
+          Status = "Added", 
+          Additions = f.Additions,
+          Deletions = f.Deletions,
+          Patch = f.Patch
+        }).ToList();
+
+     
+        diffFiles.InsertRange(0, firstCommitFiles); 
+      }
 
       return new ReleasePatchNoteBundle
       {
