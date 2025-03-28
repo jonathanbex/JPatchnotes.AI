@@ -53,7 +53,7 @@ namespace Patchnotes.AI.Helpers
             {
               Endpoint = "",
               DeploymentName = "",
-              APIKey="",
+              APIKey = "",
             }
           };
 
