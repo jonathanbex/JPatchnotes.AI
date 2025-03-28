@@ -1,6 +1,6 @@
 # JPatchnotes.AI
 
-A funky patchnotes generator that analyzes release code-diffs and pull requests to generate whacky patch notes with a dash of humor!
+A funky patchnotes generator that analyzes release code-diffs and pull requests to generate whacky patch notes using ChatGPT with a dash of humor!
 
 ## Features:
 - Analyzes **GitHub pull requests** and **code diffs** to generate release notes.
@@ -14,58 +14,45 @@ A funky patchnotes generator that analyzes release code-diffs and pull requests 
 Here’s what an output might look like:
 
 ```
-[Total Patch Notes]
-# Release Notes for Version master
+# DiscordBot Release Notes - Version `master` 🚀
+*Changes since `20240818-e5acf1a9`*
 
-*Changes since commit 81670b1931f71fc7ecd1db4b47217cc208e3ffe1.*
-
-## Features
-
-### User Authentication
-- Account Management: Introduced AccountController to handle user authentication processes, including login and logout functionalities.
-- Login Interface: Implemented a user-friendly login page (Views/Account/Login.cshtml) using LoginViewModel to enhance the user experience.
-- Authorization Enhancements: Secured key controllers (AdminController, FileController, and updated HomeController) with the [Authorize] attribute to ensure only authenticated users can access certain functionalities.
-
-### Admin Dashboard
-- User Management: Added an AdminController allowing administrators to manage user accounts. Features include creating, editing, and deleting users.
-- Drive Management: Enabled administrators to view, add, and remove drives dynamically via the new admin interface (Views/Admin/Drives.cshtml).
-
-### File Management
-- File Operations: Introduced FileController to facilitate file uploads, downloads, and deletions, providing a robust file management system for users.
-- File Results Handling: Added FileResultModel and GlobalLinkFileResult to efficiently handle and display file data.
-
-### Global Link Sharing
-- Link Generation: Developed IGlobalLinkService and its implementation GlobalLinkService to generate secure global links for file sharing.
-- Link Tracking: Implemented mechanisms to track link usage and expiration through the GlobalLink model, ensuring secure and controlled access to shared files.
-
-### User Services and Repositories
-- User Service: Added IUserService and UserService to handle user-related operations such as registration, authentication, and profile management.
-- Repository Pattern: Established repository interfaces and implementations for User and GlobalLink (IUserRepository, UserRepository, IGlobalLinkRepository, GlobalLinkRepository) to promote a clean separation of concerns and enhance maintainability.
-
-## Improvements
-
-- Project Structure Refinement: Refactored existing controllers to inherit from a new BaseController, promoting code reusability and consistency across the application.
-- Configuration Management: Introduced JsonConfigurationHelper to streamline the handling and updating of application settings.
-- Dependency Injection Enhancements: Expanded service registrations in Program.cs to include new services and repositories, improving scalability and maintainability.
-- UI Enhancements: Upgraded various views (Views/Home/Index.cshtml, Views/File/Index.cshtml, etc.) to offer a more intuitive and responsive user interface.
-
-## Fixes
-
-*No bug fixes in this release. Stay tuned for some magic in the next update! ??*
-
-## Internal
-
-- CI/CD Pipeline: Added a new GitHub Actions workflow (.github/workflows/release.yml) to automate the build and release process for the master branch, ensuring smoother deployments.
-- Security Enhancements: Implemented CryptoUtility for secure hashing operations, bolstering the application's security measures.
-- Package Updates: Updated JFiler.csproj to include essential dependencies like Newtonsoft.Json and sqlite-net-pcl to support new features and improve performance.
-
-## Other
-
-- Documentation: Added a comprehensive README.md outlining the JFiler application's purpose, features, and setup instructions to help users get started quickly.
+Hello, Discord enthusiasts and fellow developers! Here's the latest scoop on what's brewing in the DiscordBot project. Grab your favorite beverage and let's dive in! ☕
 
 ---
 
-Happy coding! ?? If you encounter any issues or have suggestions, feel free to reach out. Until next time, keep those pull requests coming!
+## Features 🎉
+- **SQLite Integration**: We've leveled up our data storage game by integrating **SQLite**! Now you can manage your guild lineups and server commands more efficiently with our new `SqliteGuildLineup` and `SqliteServerCommand` models. 📚✨
+
+## Improvements 🔧
+- **Enhanced Configuration Validation**: Improved the `ConfigurationValidator` to handle SQLite usage settings seamlessly. No more configuration headaches! 🛠️
+- **Dependency Injection Refinement**: Introduced the `RepositoryResolver` to streamline dependency injection, making our codebase cleaner and more modular. 🧩
+
+## Fixes 🐞
+- **JSON Parsing Enhancement**: Fixed the JSON parsing in `JsonConfigurationHelper` by removing pesky comments that were causing hiccups. Smooth sailing ahead! 🚢🔍
+
+## Internal 👨‍💻
+- **Project Structure Overhaul**: Updated the solution and project files to incorporate new SQLite repositories and context models. Our internal architecture is now more robust and scalable. 🏗️
+- **Mapper Enhancements**: Expanded `DBMapper` to support the new SQLite models, ensuring data consistency across the board. 🔄
+
+## Other 📚
+- **README Revamp**: Spruced up the README with clearer setup instructions and additional resources. Getting started with DiscordBot is now easier than ever! 📖✨
+
+*Nothing major changed? Well, just a little tweak here and there to keep things shiny! 😉*
+
+---
+
+### Authors:
+#### jonathanbex
+- **Files Changed**: 14
+- **Additions**: 5202
+- **Deletions**: 670
+
+Meet Jonathan! When he's not typing away like a caffeinated squirrel, he's meticulously crafting code to make DiscordBot awesome. 🐿️☕
+
+---
+
+Stay tuned for more updates, and happy coding! If you have any questions or feedback, feel free to reach out. Let's make DiscordBot the best it can be together! 🤝💬
 ```
 
 ## Setup Instructions
