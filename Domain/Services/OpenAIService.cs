@@ -73,6 +73,7 @@ Keep it fun but informative. Avoid emojis unless absolutely necessary (and even 
           
         }
       }
+
       var totalMessage = sb.ToString();
       Console.WriteLine("\n\n[Total Patch Notes]");
       Console.WriteLine(totalMessage);
