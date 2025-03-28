@@ -112,7 +112,7 @@ Make a lil fun and harmless description about every author.
         if (!string.IsNullOrWhiteSpace(file.Patch))
         {
           sb.AppendLine("```diff");
-          sb.AppendLine(Truncate(file.Patch, 500));
+          sb.AppendLine(Truncate(file.Patch, 10000));
           sb.AppendLine("```");
         }
       }
