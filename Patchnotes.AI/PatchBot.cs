@@ -22,26 +22,58 @@ namespace Patchnotes.AI
       Console.WriteLine("Welcome to J Patch Generator");
       Console.WriteLine("**************");
       Console.WriteLine(@"
-      ╔══════════════════════════════════════════════════════╗
-      ║           ▄███████████▄                              ║
-      ║         ▄██▀         ▀▀██▄                           ║
-      ║       ▄██   ▄████████▄  ██▄       IN THE GRIM        ║
-      ║      ███   ██▀      ▀██  ███     DARKNESS OF CODE...║
-      ║     ███   ███      ▄███  ███                         ║
-      ║     ███   ▀██▄    ▄██▀   ███     THERE IS ONLY PATCH ║
-      ║     ▀███▄   ▀▀████▀▀   ▄███▀                         ║
-      ║       ▀███▄▄        ▄▄███▀                           ║
-      ║          ▀▀██████████▀▀      SERVITOR PROTOCOL: ON  ║
-      ╚══════════════════════════════════════════════════════╝
-");
+        ╔══════════════════════════════════════════════════════╗
+        ║           ▄███████████▄                              ║
+        ║         ▄██▀         ▀▀██▄                           ║
+        ║       ▄██   ▄████████▄  ██▄       IN THE GRIM        ║
+        ║      ███   ██▀      ▀██  ███     DARKNESS OF CODE...║
+        ║     ███   ███      ▄███  ███                         ║
+        ║     ███   ▀██▄    ▄██▀   ███     THERE IS ONLY PATCH ║
+        ║     ▀███▄   ▀▀████▀▀   ▄███▀                         ║
+        ║       ▀███▄▄        ▄▄███▀                           ║
+        ║          ▀▀██████████▀▀      SERVITOR PROTOCOL: ON  ║
+        ╚══════════════════════════════════════════════════════╝
+        ");
 
+      while (true)
+      {
+        try
+        {
+          Console.WriteLine("Do you want to generate patch notes? (y/n to exit): ");
+          var continueOption = Console.ReadLine();
+          if (continueOption?.ToLower() == "n" || continueOption?.ToLower() == "no")
+          {
+            Console.WriteLine("Exiting...");
+            break;
+          }
+          await GenerateDialogAndRun();
+        }
+        catch (Exception ex)
+        {
+          Console.WriteLine($"An error occurred: {ex.Message}");
+          Console.WriteLine("Please try again.");
+        }
+      }
+    }
+
+    async Task GenerateDialogAndRun()
+    {
       var owner = PromptInput("owner");
       var repo = PromptInput("repository name");
-      //now its input
-      var patchData = await _githubService.GeneratePatchData(owner, repo);
-      await _openAIService.GeneratePatchNotesAsync(patchData);
 
+      // Now it's input
+      try
+      {
+        var patchData = await _githubService.GeneratePatchData(owner, repo);
+        await _openAIService.GeneratePatchNotesAsync(patchData);
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Error generating patch data or patch notes: {ex.Message}");
+        Console.WriteLine("Please try again.");
+      }
     }
+
     string PromptInput(string label)
     {
       Console.WriteLine($"Please input {label}:");

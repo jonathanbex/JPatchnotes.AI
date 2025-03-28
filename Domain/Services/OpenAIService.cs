@@ -69,7 +69,6 @@ Keep it fun but informative. Avoid emojis unless absolutely necessary (and even 
         foreach (var part in update.ContentUpdate?.ToList() ?? Enumerable.Empty<ChatMessageContentPart>())
         {
    
-            Console.Write($"{part.Text}");
             sb.Append(part.Text);
           
         }

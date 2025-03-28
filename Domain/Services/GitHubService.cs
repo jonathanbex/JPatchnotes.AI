@@ -33,14 +33,43 @@ namespace Domain.Services
       {
         if (Int64.TryParse(releaseId, out long parsedReleaseId)) release = await _githubClient.Repository.Release.Get(owner, repo, parsedReleaseId);
       }
-      if(release == null) release = await _githubClient.Repository.Release.GetLatest(owner, repo);
-
-      var baseTag = release.TagName;
-
+      if (release == null)
+      {
+        try
+        {
+          release = await _githubClient.Repository.Release.GetLatest(owner, repo);
+        }
+        catch (Exception)
+        {
+          //repo desont have any releases 
+          release = null;
+        }
+      }
       var repoInfo = await _githubClient.Repository.Get(owner, repo);
-      var defaultBranch = repoInfo.DefaultBranch; 
 
-      var compare = await _githubClient.Repository.Commit.Compare(owner, repo, baseTag, defaultBranch);
+      var defaultBranch = repoInfo.DefaultBranch;
+
+      var headTag = release?.TagName;
+
+
+      var previousReleases = await _githubClient.Repository.Release.GetAll(owner, repo);
+      var previousRelease = previousReleases
+         .Where(r => !r.TagName.Equals(headTag, StringComparison.OrdinalIgnoreCase))
+         .OrderByDescending(r => r.PublishedAt)
+         .FirstOrDefault();
+
+      //previous release if it exists
+      var baseTag = previousRelease?.TagName;
+      if (string.IsNullOrEmpty(baseTag))
+      {
+        //if it doesnt exist fetch first commit
+        var commits = await _githubClient.Repository.Commit.GetAll(owner, repo, new CommitRequest { Sha = defaultBranch });
+        var firstCommit = commits.Last();  // The first commit is at the end of the list
+        baseTag = firstCommit.Sha;
+      }
+
+
+      var compare = await _githubClient.Repository.Commit.Compare(owner, repo, baseTag, headTag);
       var commitShas = compare.Commits.Select(c => c.Sha).ToHashSet();
 
       var allPrs = await _githubClient.Repository.PullRequest.GetAllForRepository(owner, repo,
