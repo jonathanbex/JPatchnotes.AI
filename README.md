@@ -15,29 +15,57 @@ Here’s what an output might look like:
 
 ```
 [Total Patch Notes]
-# Release Notes - master
+# Release Notes for Version master
 
-*Changes since `20241130-f35d82d5`*
+*Changes since commit 81670b1931f71fc7ecd1db4b47217cc208e3ffe1.*
 
 ## Features
-- **Introducing `BotApplication` Solution**
-  We've added a brand new `BotApplication.sln` to better organize our bot projects. Say hello to a more streamlined development experience!
+
+### User Authentication
+- Account Management: Introduced AccountController to handle user authentication processes, including login and logout functionalities.
+- Login Interface: Implemented a user-friendly login page (Views/Account/Login.cshtml) using LoginViewModel to enhance the user experience.
+- Authorization Enhancements: Secured key controllers (AdminController, FileController, and updated HomeController) with the [Authorize] attribute to ensure only authenticated users can access certain functionalities.
+
+### Admin Dashboard
+- User Management: Added an AdminController allowing administrators to manage user accounts. Features include creating, editing, and deleting users.
+- Drive Management: Enabled administrators to view, add, and remove drives dynamically via the new admin interface (Views/Admin/Drives.cshtml).
+
+### File Management
+- File Operations: Introduced FileController to facilitate file uploads, downloads, and deletions, providing a robust file management system for users.
+- File Results Handling: Added FileResultModel and GlobalLinkFileResult to efficiently handle and display file data.
+
+### Global Link Sharing
+- Link Generation: Developed IGlobalLinkService and its implementation GlobalLinkService to generate secure global links for file sharing.
+- Link Tracking: Implemented mechanisms to track link usage and expiration through the GlobalLink model, ensuring secure and controlled access to shared files.
+
+### User Services and Repositories
+- User Service: Added IUserService and UserService to handle user-related operations such as registration, authentication, and profile management.
+- Repository Pattern: Established repository interfaces and implementations for User and GlobalLink (IUserRepository, UserRepository, IGlobalLinkRepository, GlobalLinkRepository) to promote a clean separation of concerns and enhance maintainability.
 
 ## Improvements
-- **Updated CI/CD Pipeline**
-  Our GitHub Actions workflow (`.github/workflows/dotnet-desktop.yml`) now restores and builds the `BotApplication` project instead of the old `DiscordBot`. Faster, cleaner, better.
+
+- Project Structure Refinement: Refactored existing controllers to inherit from a new BaseController, promoting code reusability and consistency across the application.
+- Configuration Management: Introduced JsonConfigurationHelper to streamline the handling and updating of application settings.
+- Dependency Injection Enhancements: Expanded service registrations in Program.cs to include new services and repositories, improving scalability and maintainability.
+- UI Enhancements: Upgraded various views (Views/Home/Index.cshtml, Views/File/Index.cshtml, etc.) to offer a more intuitive and responsive user interface.
 
 ## Fixes
-- **Goodbye, DiscordBot**
-  Removed outdated `DiscordBot` components including controllers, middleware, and project files. It's not you, it's us. We're moving forward with `BotApplication`!
+
+*No bug fixes in this release. Stay tuned for some magic in the next update! ??*
 
 ## Internal
-- **Repository Cleanup**
-  Tidied up the codebase by deleting deprecated `DiscordBot` solution files, middleware, and launch settings. Less clutter, more clarity.
+
+- CI/CD Pipeline: Added a new GitHub Actions workflow (.github/workflows/release.yml) to automate the build and release process for the master branch, ensuring smoother deployments.
+- Security Enhancements: Implemented CryptoUtility for secure hashing operations, bolstering the application's security measures.
+- Package Updates: Updated JFiler.csproj to include essential dependencies like Newtonsoft.Json and sqlite-net-pcl to support new features and improve performance.
+
+## Other
+
+- Documentation: Added a comprehensive README.md outlining the JFiler application's purpose, features, and setup instructions to help users get started quickly.
 
 ---
 
-Keep coding, keep smiling! ??
+Happy coding! ?? If you encounter any issues or have suggestions, feel free to reach out. Until next time, keep those pull requests coming!
 ```
 
 ## Setup Instructions
