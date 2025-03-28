@@ -12,5 +12,6 @@ namespace Domain.Models
     public int FilesChanged { get; set; } = 0;
     public int Additions { get; set; } = 0;
     public int Deletions { get; set; } = 0;
+    public List<string> FilesChangedList { get; set; } = new();
   }
 }

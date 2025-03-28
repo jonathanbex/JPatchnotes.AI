@@ -147,34 +147,38 @@ namespace Domain.Services
           Patch = f.Patch,
         }).ToList();
 
-        foreach (var commit in firstCommitPatch.Files)
+        foreach (var file in firstCommitPatch.Files)
         {
           string authorName = firstCommitPatch.Author.Login;
 
 
-          int additions = commit.Additions;
-          int deletions = commit.Deletions;
+          int additions = file.Additions;
+          int deletions = file.Deletions;
 
           // Update the author's commit history
-          AddOrUpdateAuthorHistory(authorCodeHistories, authorName, 1, additions, deletions);
+          AddOrUpdateAuthorHistory(authorCodeHistories, authorName, file.Filename, additions, deletions);
         }
         diffFiles.InsertRange(0, firstCommitFiles);
       }
       int totalCommits = compare.Commits.Count();
 
 
-      foreach (var sha in commitShas.Where(x=> !x.Equals(baseTag)))
+      foreach (var sha in commitShas.Where(x => !x.Equals(baseTag)))
       {
-
+ 
         var fullCommit = await _githubClient.Repository.Commit.Get(owner, repo, sha);
 
         var author = fullCommit.Author.Login;
-        // Get the commit stats (additions and deletions)
-        var additions = fullCommit.Stats.Additions;
-        var deletions = fullCommit.Stats.Deletions;
-        var filesChanged = fullCommit.Files.Count();
+        foreach (var file in fullCommit.Files)
+        {
+          // Skip files with no changes or if no patch is available
+          if (string.IsNullOrWhiteSpace(file.Patch)) continue;
+          int additions = fullCommit.Stats.Additions;
+          int deletions = fullCommit.Stats.Deletions;
+          AddOrUpdateAuthorHistory(authorCodeHistories, author, file.Filename, additions, deletions);
+        }
 
-        AddOrUpdateAuthorHistory(authorCodeHistories, author, filesChanged, additions, deletions);
+ 
       }
 
 
@@ -190,7 +194,7 @@ namespace Domain.Services
       };
     }
 
-    private void AddOrUpdateAuthorHistory(List<AuthorCodeHistory> authorCodeHistories, string authorName, int filesChanged, int additions, int deletions)
+    private void AddOrUpdateAuthorHistory(List<AuthorCodeHistory> authorCodeHistories, string authorName, string fileName, int additions, int deletions)
     {
       // Find the existing author history
       var existingAuthor = authorCodeHistories.FirstOrDefault(a => a.Name.Equals(authorName, StringComparison.OrdinalIgnoreCase));
@@ -198,7 +202,11 @@ namespace Domain.Services
       if (existingAuthor != null)
       {
         // Update the existing entry
-        existingAuthor.FilesChanged += filesChanged;
+        if (!existingAuthor.FilesChangedList.Any(x => x == fileName))
+        {
+          existingAuthor.FilesChanged++ ;
+          existingAuthor.FilesChangedList.Add(fileName);
+        }
         existingAuthor.Additions += additions;
         existingAuthor.Deletions += deletions;
       }
@@ -210,7 +218,7 @@ namespace Domain.Services
           Name = authorName,
           Additions = additions,
           Deletions = deletions,
-          FilesChanged = filesChanged
+          FilesChanged = 1
         });
       }
     }

@@ -53,7 +53,7 @@ Use markdown formatting with sections like:
 
 Do **not** make things up. Base everything on the actual content provided.
 
-Keep it fun but informative.
+Keep it fun but informative, use smileys on every section
 
 In the end make a summary using the author data using FilesChanged,Additions and Deletions.Stack them like this and remove + and -
 Author (some quick summary of them)
