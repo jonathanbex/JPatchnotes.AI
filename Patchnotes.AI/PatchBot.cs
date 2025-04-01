@@ -1,4 +1,6 @@
-﻿using Domain.Services;
+﻿using Domain.Helpers;
+using Domain.Models;
+using Domain.Services;
 using Patchnotes.AI.Helpers;
 using System;
 using System.Collections.Generic;
@@ -65,7 +67,22 @@ namespace Patchnotes.AI
       try
       {
         var patchData = await _githubService.GeneratePatchData(owner, repo);
-        var patchNotes = await _openAIService.GeneratePatchNotesAsync(patchData);
+        if (patchData.DiffFiles.Count() > 50)
+        {
+          var patchNoteChunks = new List<string>();
+          foreach (var chunk in patchData.DiffFiles.Chunk(50))
+          {
+            var chunkedBundle = PatchDataSplitHelper.CloneWithDiffFiles(patchData, chunk);
+            var patchNotes = await _openAIService.GeneratePatchNotesAsync(chunkedBundle);
+            patchNoteChunks.Add(patchNotes);
+          }
+
+          var finalNotes = await _openAIService.GeneratePatchNotesFromCombined(patchNoteChunks);
+        }
+        else
+        {
+          var patchNotes = await _openAIService.GeneratePatchNotesAsync(patchData);
+        }
       }
       catch (Exception ex)
       {

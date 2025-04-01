@@ -9,5 +9,6 @@
     public List<PullRequestData> PullRequests { get; set; } = new();
     public List<FileChangeSummary> DiffFiles { get; set; } = new();
     public List<AuthorCodeHistory> AuthorCodeHistories { get; set; } = new();
+
   }
 }

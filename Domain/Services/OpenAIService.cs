@@ -89,6 +89,64 @@ Make a lil fun and harmless description about every author.
 
     }
 
+
+    public async Task<string> GeneratePatchNotesFromCombined(List<string> patchNotes, CancellationToken cancellationToken = default)
+    {
+      var options = new ChatCompletionOptions
+      {
+        EndUserId = "release-bot"
+      };
+      var instructionHeader = """
+You are a patchnote summarizer. Generate a final, clean, markdown-formatted summary from several partial patchnotes.
+
+Preserve their tone and style (humorous, friendly, memes if included), but remove duplicates, group similar items, and make it feel like one consistent release note.
+
+Use these sections:
+- Features 😊
+- Improvements 🔧
+- Fixes 🐛
+- Internal 🏗️
+- Other 🤷
+
+Dont combine Author changes just pick one from a Summary
+
+At the end, include a fun summary of contributors if provided in the original texts. 
+""";
+
+      var sbPrompt = new StringBuilder();
+      for (int i = 0; i < patchNotes.Count; i++)
+      {
+        sbPrompt.AppendLine($"--- Summary Index: {i + 1} ---");
+        sbPrompt.AppendLine(patchNotes[i]);
+        sbPrompt.AppendLine();
+      }
+
+      var userMessage = UserChatMessage.CreateUserMessage(new[]
+      {
+    ChatMessageContentPart.CreateTextPart(instructionHeader + "\n\n" + sbPrompt.ToString())
+});
+
+      var messages = new List<ChatMessage> { userMessage };
+
+      var sb = new StringBuilder();
+
+      await foreach (var update in _chatClient.CompleteChatStreamingAsync(messages, options, cancellationToken))
+      {
+        foreach (var part in update.ContentUpdate?.ToList() ?? Enumerable.Empty<ChatMessageContentPart>())
+        {
+
+          sb.Append(part.Text);
+
+        }
+      }
+
+      var totalMessage = sb.ToString();
+      Console.WriteLine("\n\n[Total Patch Notes]");
+      Console.WriteLine(totalMessage);
+      return totalMessage;
+
+    }
+
     private string BuildPrompt(ReleasePatchNoteBundle bundle)
     {
       var sb = new System.Text.StringBuilder();
@@ -112,7 +170,7 @@ Make a lil fun and harmless description about every author.
         if (!string.IsNullOrWhiteSpace(file.Patch))
         {
           sb.AppendLine("```diff");
-          sb.AppendLine(Truncate(file.Patch, 10000));
+          sb.AppendLine(Truncate(file.Patch, 1000));
           sb.AppendLine("```");
         }
       }
