@@ -22,7 +22,7 @@ namespace Domain.Services
     {
       _configuration = configuration;
       var endpoint = configuration.GetValue<string>("OpenAI:Endpoint");         // e.g. https://your-resource.openai.azure.com/
-      var deployment = configuration.GetValue<string>("OpenAI:DeploymentName"); 
+      var deployment = configuration.GetValue<string>("OpenAI:DeploymentName");
       var apiKey = configuration.GetValue<string>("OpenAI:APIKey");
 
       var azureClient = new AzureOpenAIClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
@@ -54,7 +54,7 @@ Use markdown formatting with sections like:
 
 Do **not** make things up. Base everything on the actual content provided.
 
-For the section Potential Bugs list changes that can potentially cause bugs. I.e wrong percentage calculations etc.
+For the section Areas to Watch list changes that can potentially cause bugs. I.e wrong percentage calculations etc.
 
 Keep it fun but informative, use smileys on every section
 
@@ -77,11 +77,16 @@ Make a lil fun and harmless description about every author.
 
       await foreach (var update in _chatClient.CompleteChatStreamingAsync(messages, options, cancellationToken))
       {
+        var inputTokens = update.Usage.InputTokenCount;
+        var outputTokens = update.Usage.OutputTokenCount;
+
+        var cost = CalculateCost(inputTokens, outputTokens);
+
         foreach (var part in update.ContentUpdate?.ToList() ?? Enumerable.Empty<ChatMessageContentPart>())
         {
-   
-            sb.Append(part.Text);
-          
+
+          sb.Append(part.Text);
+
         }
       }
 
@@ -136,6 +141,10 @@ At the end, include a fun summary of contributors if provided in the original te
 
       await foreach (var update in _chatClient.CompleteChatStreamingAsync(messages, options, cancellationToken))
       {
+        var inputTokens = update.Usage.InputTokenCount;
+        var outputTokens = update.Usage.OutputTokenCount;
+    
+        var cost = CalculateCost(inputTokens, outputTokens);
         foreach (var part in update.ContentUpdate?.ToList() ?? Enumerable.Empty<ChatMessageContentPart>())
         {
 
@@ -149,6 +158,17 @@ At the end, include a fun summary of contributors if provided in the original te
       Console.WriteLine(totalMessage);
       return totalMessage;
 
+    }
+
+    private decimal CalculateCost(int inputTokens, int outputTokens)
+    {
+      const decimal inputRate = 0.15m / 1000000;  // $0.15 per million input tokens
+      const decimal outputRate = 0.60m / 1000000; // $0.60 per million output tokens
+
+      var inputCost = inputTokens * inputRate;
+      var outputCost = outputTokens * outputRate;
+
+      return Math.Round(inputCost + outputCost, 4);
     }
 
     private string BuildPrompt(ReleasePatchNoteBundle bundle)
@@ -183,7 +203,7 @@ At the end, include a fun summary of contributors if provided in the original te
       foreach (var author in bundle.AuthorCodeHistories.OrderByDescending(x => x.Additions - x.Deletions))
       {
         sb.AppendLine($"#### {author.Name} (Files changed : {author.FilesChanged}, {author.Additions}+ / {author.Deletions}-)");
-        
+
       }
       return sb.ToString();
     }
