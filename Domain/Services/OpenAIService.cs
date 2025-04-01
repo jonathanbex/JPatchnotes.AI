@@ -50,8 +50,11 @@ Use markdown formatting with sections like:
 - Fixes
 - Internal
 - Other
+- Potential bugs
 
 Do **not** make things up. Base everything on the actual content provided.
+
+For the section Potential Bugs list changes that can potentially cause bugs. I.e wrong percentage calculations etc.
 
 Keep it fun but informative, use smileys on every section
 
@@ -107,6 +110,7 @@ Use these sections:
 - Fixes 🐛
 - Internal 🏗️
 - Other 🤷
+- Potential bugs 🐛
 
 Dont combine Author changes just pick one from a Summary
 
