@@ -40,7 +40,7 @@ namespace Patchnotes.AI
         try
         {
           Console.WriteLine("Do you want to generate patch notes? (y/n to exit): ");
-          var continueOption = Console.ReadLine();
+          var continueOption = Console.ReadLine()?.Trim();
           if (continueOption?.ToLower() == "n" || continueOption?.ToLower() == "no")
           {
             Console.WriteLine("Exiting...");
@@ -77,11 +77,11 @@ namespace Patchnotes.AI
     string PromptInput(string label)
     {
       Console.WriteLine($"Please input {label}:");
-      var input = Console.ReadLine();
+      var input = Console.ReadLine()?.Trim();
       while (string.IsNullOrWhiteSpace(input))
       {
         Console.WriteLine($"{label} cannot be empty. Please input {label}:");
-        input = Console.ReadLine();
+        input = Console.ReadLine()?.Trim();
       }
       return input;
     }

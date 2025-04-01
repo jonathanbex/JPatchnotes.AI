@@ -165,7 +165,7 @@ namespace Domain.Services
 
       foreach (var sha in commitShas.Where(x => !x.Equals(baseTag)))
       {
- 
+
         var fullCommit = await _githubClient.Repository.Commit.Get(owner, repo, sha);
 
         var author = fullCommit.Author.Login;
@@ -178,7 +178,7 @@ namespace Domain.Services
           AddOrUpdateAuthorHistory(authorCodeHistories, author, file.Filename, additions, deletions);
         }
 
- 
+
       }
 
 
@@ -204,7 +204,7 @@ namespace Domain.Services
         // Update the existing entry
         if (!existingAuthor.FilesChangedList.Any(x => x == fileName))
         {
-          existingAuthor.FilesChanged++ ;
+          existingAuthor.FilesChanged++;
           existingAuthor.FilesChangedList.Add(fileName);
         }
         existingAuthor.Additions += additions;
