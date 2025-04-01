@@ -1,3 +1,4 @@
+using Domain.Helpers;
 using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,8 +33,25 @@ namespace Patchnotes.AI.REST.Controllers
       if (string.IsNullOrEmpty(generatePatchNotesRequest.Repo) || string.IsNullOrEmpty(generatePatchNotesRequest.Owner)) return BadRequest("Invalid body ,missing Repo or Owner");
 
       var patchData = await _githubService.GeneratePatchData(generatePatchNotesRequest.Owner, generatePatchNotesRequest.Repo);
-      var patchNotes = await _openAIService.GeneratePatchNotesAsync(patchData);
-      return Ok(new PatchNotesResultResponse { PatchNotes = patchNotes });
+      if (patchData.DiffFiles.Count() > 50)
+      {
+        var patchNoteChunks = new List<string>();
+        foreach (var chunk in patchData.DiffFiles.Chunk(50))
+        {
+          var chunkedBundle = PatchDataSplitHelper.CloneWithDiffFiles(patchData, chunk);
+          var patchNotes = await _openAIService.GeneratePatchNotesAsync(chunkedBundle);
+          patchNoteChunks.Add(patchNotes);
+        }
+
+        var finalNotes = await _openAIService.GeneratePatchNotesFromCombined(patchNoteChunks);
+        return Ok(new PatchNotesResultResponse { PatchNotes = finalNotes });
+      }
+      else
+      {
+        var patchNotes = await _openAIService.GeneratePatchNotesAsync(patchData);
+        return Ok(new PatchNotesResultResponse { PatchNotes = patchNotes });
+      }
+     
     }
   }
 }
