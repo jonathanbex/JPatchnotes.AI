@@ -50,7 +50,7 @@ Use markdown formatting with sections like:
 - Fixes
 - Internal
 - Other
-- Potential bugs
+- Areas to Watch
 
 Do **not** make things up. Base everything on the actual content provided.
 
@@ -110,7 +110,7 @@ Use these sections:
 - Fixes 🐛
 - Internal 🏗️
 - Other 🤷
-- Potential bugs 🐛
+- Areas to Watch 🕵️
 
 Dont combine Author changes just pick one from a Summary
 
