@@ -19,7 +19,7 @@ namespace Domain.Services
     {
       _configuration = configuration;
       var githubToken = _configuration.GetValue<string>("Github:Token");
-      if (string.IsNullOrWhiteSpace(githubToken)) throw new InvalidOperationException("Missign Github Token");
+      if (string.IsNullOrWhiteSpace(githubToken)) throw new InvalidOperationException("Missing Github Token");
 
       _githubClient = new GitHubClient(new ProductHeaderValue("JPatchnotes.AI"))
       {
