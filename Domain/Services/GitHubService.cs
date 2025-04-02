@@ -106,7 +106,7 @@ namespace Domain.Services
           var files = await _githubClient.PullRequest.Files(owner, repo, pr.Number);
           foreach (var file in files)
           {
-            prData.Files.Add(new FileChangeSummary
+            var splitFiles = SplitPatchIfNeeded(new FileChangeSummary
             {
               FileName = file.FileName,
               Status = file.Status,
@@ -114,6 +114,8 @@ namespace Domain.Services
               Deletions = file.Deletions,
               Patch = file.Patch
             });
+
+            prData.Files.AddRange(splitFiles);
           }
 
           prList.Add(prData);
@@ -122,30 +124,37 @@ namespace Domain.Services
 
       var authorCodeHistories = new List<AuthorCodeHistory>();
       // Get all file diffs between baseTag and main (raw code changes)
-      var diffFiles = compare.Files
-          .Where(f => !string.IsNullOrWhiteSpace(f.Patch))
-          .Select(f => new FileChangeSummary
-          {
-            FileName = f.Filename,
-            Status = f.Status,
-            Additions = f.Additions,
-            Deletions = f.Deletions,
-            Patch = f.Patch
-          })
-          .ToList();
+      var diffFiles = new List<FileChangeSummary>();
+      foreach (var f in compare.Files.Where(f => !string.IsNullOrWhiteSpace(f.Patch)))
+      {
+        var splitFiles = SplitPatchIfNeeded(new FileChangeSummary
+        {
+          FileName = f.Filename,
+          Status = f.Status,
+          Additions = f.Additions,
+          Deletions = f.Deletions,
+          Patch = f.Patch
+        });
+        diffFiles.AddRange(splitFiles);
+      }
 
       //need data from first commit from baseTag. 
       if (dataFromFirstCommit)
       {
         var firstCommitPatch = await _githubClient.Repository.Commit.Get(owner, repo, baseTag);  // Fetch the patch for the first commit
-        var firstCommitFiles = firstCommitPatch.Files.Select(f => new FileChangeSummary
+        var firstCommitFiles = new List<FileChangeSummary>();
+        foreach (var f in firstCommitPatch.Files)
         {
-          FileName = f.Filename,
-          Status = "Added",
-          Additions = f.Additions,
-          Deletions = f.Deletions,
-          Patch = f.Patch,
-        }).ToList();
+          var splitFiles = SplitPatchIfNeeded(new FileChangeSummary
+          {
+            FileName = f.Filename,
+            Status = "Added",
+            Additions = f.Additions,
+            Deletions = f.Deletions,
+            Patch = f.Patch,
+          });
+          firstCommitFiles.AddRange(splitFiles);
+        }
 
         foreach (var file in firstCommitPatch.Files)
         {
@@ -221,6 +230,39 @@ namespace Domain.Services
           FilesChanged = 1
         });
       }
+    }
+    private List<FileChangeSummary> SplitPatchIfNeeded(FileChangeSummary original, int maxPatchLength = 2000)
+    {
+      if (original == null || original.Patch == null || original.Patch.Length <= maxPatchLength) return new List<FileChangeSummary> { original };
+      var result = new List<FileChangeSummary>();
+      int filesToCreate = (int)Math.Ceiling((double)original.Patch.Length / (double)maxPatchLength);
+
+      int file = 0;
+      while (original.Patch.Length > 0)
+      {
+        file++;
+        var patchChunk = original.Patch.Substring(0, maxPatchLength);
+        var patchSplit = new FileChangeSummary
+        {
+          FileName = original.FileName,
+          Status = original.Status,
+          Patch = patchChunk,
+          Additions = original.Additions / filesToCreate,
+          Deletions = original.Deletions / filesToCreate
+        };
+
+        original.Additions -= patchSplit.Additions;
+        original.Deletions -= patchSplit.Deletions;
+        original.Patch = original.Patch.Substring(patchSplit.Patch.Length);
+        if (file == filesToCreate)
+        {
+          patchSplit.Additions += original.Additions;
+          patchSplit.Deletions += original.Deletions;
+        }
+        result.Add(patchSplit);
+      }
+     
+      return result;
     }
 
   }
