@@ -136,7 +136,7 @@ namespace Domain.Services
       var sb = new System.Text.StringBuilder();
       sb.AppendLine($"Project `{bundle.RepoName}`, - Project description : {bundle.RepoDescription}`.\n");
       sb.AppendLine($"Release notes for version `{bundle.HeadTag}`, changes since `{bundle.BaseTag}`.\n");
-
+      sb.AppendLine($"Release Date {DateTime.UtcNow.ToShortDateString()}`.\n");
       sb.AppendLine("### Pull Requests:");
       foreach (var pr in bundle.PullRequests)
       {

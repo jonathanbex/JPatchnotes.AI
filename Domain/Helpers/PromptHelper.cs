@@ -65,6 +65,8 @@ At the end, include a fun summary of contributors if provided in the original te
       - Bug Fixes 🐛
 
       Keep it short, clean, and helpful. A sprinkle of friendly tone is fine, but keep it professional.
+
+      Do **not** include developer stats or internal changes. This is for external customers.
       """;
 
     public static readonly string UserCombinedPrompt = """

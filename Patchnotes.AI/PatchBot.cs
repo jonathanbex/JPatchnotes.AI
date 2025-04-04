@@ -85,7 +85,7 @@ namespace Patchnotes.AI
         }
         else
         {
-          var patchNote = await _openAIService.GeneratePatchNotesAsync(patchData);
+          var patchNote = await _openAIService.GeneratePatchNotesAsync(patchData, patchNoteTypeEnum);
           LogCosts(patchNote);
         }
       }
