@@ -3,5 +3,6 @@
   public class PatchNotesResultResponse
   {
     public string PatchNotes { get; set; }
+    public decimal Cost { get; set; }
   }
 }

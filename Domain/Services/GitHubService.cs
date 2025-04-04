@@ -241,7 +241,7 @@ namespace Domain.Services
       while (original.Patch.Length > 0)
       {
         file++;
-        var patchChunk = original.Patch.Substring(0, maxPatchLength);
+        var patchChunk = original.Patch.Substring(0, original.Patch.Length < maxPatchLength ? original.Patch.Length : maxPatchLength);
         var patchSplit = new FileChangeSummary
         {
           FileName = original.FileName,

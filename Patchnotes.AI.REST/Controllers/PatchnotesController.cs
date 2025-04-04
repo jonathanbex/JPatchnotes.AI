@@ -1,4 +1,5 @@
 using Domain.Helpers;
+using Domain.Models;
 using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,7 +36,7 @@ namespace Patchnotes.AI.REST.Controllers
       var patchData = await _githubService.GeneratePatchData(generatePatchNotesRequest.Owner, generatePatchNotesRequest.Repo);
       if (patchData.DiffFiles.Count() > 50)
       {
-        var patchNoteChunks = new List<string>();
+        var patchNoteChunks = new List<PatchNoteGeneratedResult>();
         foreach (var chunk in patchData.DiffFiles.Chunk(50))
         {
           var chunkedBundle = PatchDataSplitHelper.CloneWithDiffFiles(patchData, chunk);
@@ -44,14 +45,14 @@ namespace Patchnotes.AI.REST.Controllers
         }
 
         var finalNotes = await _openAIService.GeneratePatchNotesFromCombined(patchNoteChunks);
-        return Ok(new PatchNotesResultResponse { PatchNotes = finalNotes });
+        return Ok(new PatchNotesResultResponse { PatchNotes = finalNotes.PatchNotes, Cost = finalNotes.Cost });
       }
       else
       {
-        var patchNotes = await _openAIService.GeneratePatchNotesAsync(patchData);
-        return Ok(new PatchNotesResultResponse { PatchNotes = patchNotes });
+        var patchNote = await _openAIService.GeneratePatchNotesAsync(patchData);
+        return Ok(new PatchNotesResultResponse { PatchNotes = patchNote.PatchNotes, Cost = patchNote.Cost });
       }
-     
+
     }
   }
 }

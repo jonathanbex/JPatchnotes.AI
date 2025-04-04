@@ -1,15 +1,11 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
-using Azure.Identity;
+using Domain.Helpers;
 using Domain.Models;
 using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using static Domain.Models.Enums.Enums;
 
 namespace Domain.Services
 {
@@ -30,42 +26,15 @@ namespace Domain.Services
       _chatClient = azureClient.GetChatClient(deployment);
     }
 
-    public async Task<string> GeneratePatchNotesAsync(ReleasePatchNoteBundle bundle, CancellationToken cancellationToken = default)
+    public async Task<PatchNoteGeneratedResult> GeneratePatchNotesAsync(ReleasePatchNoteBundle bundle, PatchNotePromptType patchNotePromptType = PatchNotePromptType.DeveloperFriendlyPrompt, CancellationToken cancellationToken = default)
     {
       var options = new ChatCompletionOptions
       {
         EndUserId = "release-bot"
       };
-      var instructionHeader = """
-You are a patchnote summarizer. Generate markdown-formatted, categorized release notes based on pull requests and code diffs.
 
-Be professional, but feel free to include a touch of humor or light sarcasm if the situation calls for it, memes are also good. Think like a friendly developer writing patchnotes for other developers.
+      var instructionHeader = GetPrompt(patchNotePromptType, false);
 
-If nothing major changed, say so — but you can do it with a wink.
-
-Use markdown formatting with sections like:
-
-- Features
-- Improvements
-- Fixes
-- Internal
-- Other
-- Areas to Watch
-
-Do **not** make things up. Base everything on the actual content provided.
-
-For the section Areas to Watch list changes that can potentially cause bugs. I.e wrong percentage calculations etc.
-
-Keep it fun but informative, use smileys on every section
-
-In the end make a summary using the author data using FilesChanged,Additions and Deletions.Stack them like this and remove + and -
-Author (some quick summary of them)
-Files changed : Number
-Additions : number
-Deletions : number
-Make a lil fun and harmless description about every author.
-
-""";
       var userMessage = UserChatMessage.CreateUserMessage(new[]
       {
     ChatMessageContentPart.CreateTextPart(instructionHeader + "\n\n" + BuildPrompt(bundle))
@@ -75,12 +44,15 @@ Make a lil fun and harmless description about every author.
 
       var sb = new StringBuilder();
 
+      var totalCostForJob = 0m;
+
       await foreach (var update in _chatClient.CompleteChatStreamingAsync(messages, options, cancellationToken))
       {
-        var inputTokens = update.Usage.InputTokenCount;
-        var outputTokens = update.Usage.OutputTokenCount;
+        var inputTokens = update.Usage?.InputTokenCount;
+        var outputTokens = update.Usage?.OutputTokenCount;
 
         var cost = CalculateCost(inputTokens, outputTokens);
+        totalCostForJob += cost;
 
         foreach (var part in update.ContentUpdate?.ToList() ?? Enumerable.Empty<ChatMessageContentPart>())
         {
@@ -93,40 +65,24 @@ Make a lil fun and harmless description about every author.
       var totalMessage = sb.ToString();
       Console.WriteLine("\n\n[Total Patch Notes]");
       Console.WriteLine(totalMessage);
-      return totalMessage;
+      return new PatchNoteGeneratedResult {  PatchNotes = totalMessage, Cost = totalCostForJob};
 
     }
 
 
-    public async Task<string> GeneratePatchNotesFromCombined(List<string> patchNotes, CancellationToken cancellationToken = default)
+    public async Task<PatchNoteGeneratedResult> GeneratePatchNotesFromCombined(List<PatchNoteGeneratedResult> patchNotes, PatchNotePromptType patchNotePromptType = PatchNotePromptType.DeveloperFriendlyPrompt, CancellationToken cancellationToken = default)
     {
       var options = new ChatCompletionOptions
       {
         EndUserId = "release-bot"
       };
-      var instructionHeader = """
-You are a patchnote summarizer. Generate a final, clean, markdown-formatted summary from several partial patchnotes.
-
-Preserve their tone and style (humorous, friendly, memes if included), but remove duplicates, group similar items, and make it feel like one consistent release note.
-
-Use these sections:
-- Features 😊
-- Improvements 🔧
-- Fixes 🐛
-- Internal 🏗️
-- Other 🤷
-- Areas to Watch 🕵️
-
-Dont combine Author changes just pick one from a Summary
-
-At the end, include a fun summary of contributors if provided in the original texts. 
-""";
+      var instructionHeader = GetPrompt(patchNotePromptType, true);
 
       var sbPrompt = new StringBuilder();
       for (int i = 0; i < patchNotes.Count; i++)
       {
         sbPrompt.AppendLine($"--- Summary Index: {i + 1} ---");
-        sbPrompt.AppendLine(patchNotes[i]);
+        sbPrompt.AppendLine(patchNotes[i].PatchNotes);
         sbPrompt.AppendLine();
       }
 
@@ -139,12 +95,16 @@ At the end, include a fun summary of contributors if provided in the original te
 
       var sb = new StringBuilder();
 
+      var totalCostForJob = patchNotes.Sum(x=>x.Cost);
+
+
       await foreach (var update in _chatClient.CompleteChatStreamingAsync(messages, options, cancellationToken))
       {
-        var inputTokens = update.Usage.InputTokenCount;
-        var outputTokens = update.Usage.OutputTokenCount;
-    
+        var inputTokens = update.Usage?.InputTokenCount;
+        var outputTokens = update.Usage?.OutputTokenCount;
+
         var cost = CalculateCost(inputTokens, outputTokens);
+        totalCostForJob += cost;
         foreach (var part in update.ContentUpdate?.ToList() ?? Enumerable.Empty<ChatMessageContentPart>())
         {
 
@@ -156,17 +116,17 @@ At the end, include a fun summary of contributors if provided in the original te
       var totalMessage = sb.ToString();
       Console.WriteLine("\n\n[Total Patch Notes]");
       Console.WriteLine(totalMessage);
-      return totalMessage;
+      return new PatchNoteGeneratedResult { PatchNotes = totalMessage, Cost = totalCostForJob };
 
     }
 
-    private decimal CalculateCost(int inputTokens, int outputTokens)
+    private decimal CalculateCost(int? inputTokens, int? outputTokens)
     {
       const decimal inputRate = 0.15m / 1000000;  // $0.15 per million input tokens
       const decimal outputRate = 0.60m / 1000000; // $0.60 per million output tokens
 
-      var inputCost = inputTokens * inputRate;
-      var outputCost = outputTokens * outputRate;
+      var inputCost = (inputTokens ?? 0) * inputRate;
+      var outputCost = (outputTokens ?? 0) * outputRate;
 
       return Math.Round(inputCost + outputCost, 4);
     }
@@ -214,5 +174,19 @@ At the end, include a fun summary of contributors if provided in the original te
 
     private string Truncate(string input, int maxLength) =>
         input.Length <= maxLength ? input : input[..maxLength] + "\n// (truncated)";
+
+    private string GetPrompt(PatchNotePromptType promptType, bool summary = false)
+    {
+      return (promptType, summary) switch
+      {
+        (PatchNotePromptType.DeveloperFriendlyPrompt, false) => PromptHelper.DeveloperPrompt,
+        (PatchNotePromptType.DeveloperFriendlyPrompt, true) => PromptHelper.DeveloperCombinedPrompt,
+        (PatchNotePromptType.UserFriendlyPrompt, false) => PromptHelper.UserPrompt,
+        (PatchNotePromptType.UserFriendlyPrompt, true) => PromptHelper.UserCombinedPrompt,
+        _ => throw new NotSupportedException("Unknown patch note prompt type or mode")
+      };
+    }
+
+
   }
 }

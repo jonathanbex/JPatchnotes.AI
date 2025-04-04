@@ -1,12 +1,15 @@
 ﻿using Domain.Helpers;
 using Domain.Models;
 using Domain.Services;
+using Microsoft.Extensions.Hosting;
 using Patchnotes.AI.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Domain.Models.Enums.Enums;
 
 namespace Patchnotes.AI
 {
@@ -62,26 +65,28 @@ namespace Patchnotes.AI
     {
       var owner = PromptInput("owner");
       var repo = PromptInput("repository name");
-
+      var patchNoteTypeEnum = PromptPatchNoteType();
       // Now it's input
       try
       {
         var patchData = await _githubService.GeneratePatchData(owner, repo);
         if (patchData.DiffFiles.Count() > 50)
         {
-          var patchNoteChunks = new List<string>();
+          var patchNoteChunks = new List<PatchNoteGeneratedResult>();
           foreach (var chunk in patchData.DiffFiles.Chunk(50))
           {
             var chunkedBundle = PatchDataSplitHelper.CloneWithDiffFiles(patchData, chunk);
-            var patchNotes = await _openAIService.GeneratePatchNotesAsync(chunkedBundle);
+            var patchNotes = await _openAIService.GeneratePatchNotesAsync(chunkedBundle, patchNoteTypeEnum);
             patchNoteChunks.Add(patchNotes);
           }
 
-          var finalNotes = await _openAIService.GeneratePatchNotesFromCombined(patchNoteChunks);
+          var finalNotes = await _openAIService.GeneratePatchNotesFromCombined(patchNoteChunks, patchNoteTypeEnum);
+          LogCosts(finalNotes);
         }
         else
         {
-          var patchNotes = await _openAIService.GeneratePatchNotesAsync(patchData);
+          var patchNote = await _openAIService.GeneratePatchNotesAsync(patchData);
+          LogCosts(patchNote);
         }
       }
       catch (Exception ex)
@@ -89,6 +94,14 @@ namespace Patchnotes.AI
         Console.WriteLine($"Error generating patch data or patch notes: {ex.Message}");
         Console.WriteLine("Please try again.");
       }
+    }
+
+    void LogCosts(PatchNoteGeneratedResult patchNote)
+    {
+      Console.WriteLine();
+      Console.WriteLine("🎉 Patchnote generation complete!");
+      Console.WriteLine($"🧾 Total cost: {patchNote.Cost.ToString("C3", CultureInfo.CreateSpecificCulture("en-US"))} USD");
+      Console.WriteLine();
     }
 
     string PromptInput(string label)
@@ -101,6 +114,21 @@ namespace Patchnotes.AI
         input = Console.ReadLine()?.Trim();
       }
       return input;
+    }
+    PatchNotePromptType PromptPatchNoteType()
+    {
+      Console.WriteLine("Select patch note type:");
+      Console.WriteLine("1 - Developer Friendly");
+      Console.WriteLine("2 - Customer Friendly");
+      Console.Write("Enter choice (default is 1): ");
+
+      var input = Console.ReadLine()?.Trim();
+
+      return input switch
+      {
+        "2" => PatchNotePromptType.UserFriendlyPrompt,
+        _ => PatchNotePromptType.DeveloperFriendlyPrompt
+      };
     }
   }
 }
