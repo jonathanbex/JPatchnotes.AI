@@ -76,7 +76,7 @@ namespace Domain.Services
       var compare = await _githubClient.Repository.Commit.Compare(owner, repo, baseTag, headTag);
       //get sha for the commits, will be used later to fetch author info and changes connected to each author
       var commitShas = compare.Commits.Select(c => c.Sha).ToHashSet();
-
+      var commitMessages = compare.Commits.Select(x =>  x.Commit.Message ).Distinct().ToList();
       var allPrs = await _githubClient.Repository.PullRequest.GetAllForRepository(owner, repo,
           new PullRequestRequest { State = ItemStateFilter.Closed });
 
@@ -200,6 +200,7 @@ namespace Domain.Services
         PullRequests = prList,
         DiffFiles = diffFiles,
         AuthorCodeHistories = authorCodeHistories,
+        CommitMessages = commitMessages
       };
     }
 

@@ -136,7 +136,7 @@ namespace Domain.Services
       var sb = new System.Text.StringBuilder();
       sb.AppendLine($"Project `{bundle.RepoName}`, - Project description : {bundle.RepoDescription}`.\n");
       sb.AppendLine($"Release notes for version `{bundle.HeadTag}`, changes since `{bundle.BaseTag}`.\n");
-      sb.AppendLine($"Release Date {DateTime.UtcNow.ToShortDateString()}`.\n");
+      sb.AppendLine($"Release Date: {DateTime.UtcNow:yyyy-MM-dd}\n");
       sb.AppendLine("### Pull Requests:");
       foreach (var pr in bundle.PullRequests)
       {
@@ -146,6 +146,13 @@ namespace Domain.Services
           sb.AppendLine($"  > {Sanitize(pr.Body)}");
         }
       }
+
+      sb.AppendLine("### Commit Messages contained in release:");
+      foreach (var commitMessage in bundle.CommitMessages)
+      {
+        sb.AppendLine($"{commitMessage}");
+      }
+
 
       sb.AppendLine("\n### Code Changes:");
       foreach (var file in bundle.DiffFiles)
