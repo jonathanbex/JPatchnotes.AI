@@ -4,6 +4,7 @@ using Domain.Helpers;
 using Domain.Models;
 using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
+using System.Reflection.Metadata;
 using System.Text;
 using static Domain.Models.Enums.Enums;
 
@@ -33,14 +34,27 @@ namespace Domain.Services
         EndUserId = "release-bot"
       };
 
-      var instructionHeader = GetPrompt(patchNotePromptType, false);
+
+
+     // var instructionHeader = GetPrompt(patchNotePromptType, false);
+
+//      var userMessage = UserChatMessage.CreateUserMessage(new[]
+//      {
+//    ChatMessageContentPart.CreateTextPart(instructionHeader + "\n\n" + BuildPrompt(bundle))
+//});
+
+      var systemMessage = SystemChatMessage.CreateSystemMessage(new[]
+{
+        ChatMessageContentPart.CreateTextPart(GetPrompt(patchNotePromptType, false))
+    });
+
 
       var userMessage = UserChatMessage.CreateUserMessage(new[]
       {
-    ChatMessageContentPart.CreateTextPart(instructionHeader + "\n\n" + BuildPrompt(bundle))
-});
+        ChatMessageContentPart.CreateTextPart(BuildPrompt(bundle))
+    });
 
-      var messages = new List<ChatMessage> { userMessage };
+      var messages = new List<ChatMessage> { systemMessage,userMessage };
 
       var sb = new StringBuilder();
 
@@ -76,7 +90,10 @@ namespace Domain.Services
       {
         EndUserId = "release-bot"
       };
-      var instructionHeader = GetPrompt(patchNotePromptType, true);
+      var systemMessage = SystemChatMessage.CreateSystemMessage(new[]
+{
+        ChatMessageContentPart.CreateTextPart(GetPrompt(patchNotePromptType, false))
+    });
 
       var sbPrompt = new StringBuilder();
       for (int i = 0; i < patchNotes.Count; i++)
@@ -86,12 +103,17 @@ namespace Domain.Services
         sbPrompt.AppendLine();
       }
 
-      var userMessage = UserChatMessage.CreateUserMessage(new[]
-      {
-    ChatMessageContentPart.CreateTextPart(instructionHeader + "\n\n" + sbPrompt.ToString())
-});
+      //  var userMessage = UserChatMessage.CreateUserMessage(new[]
+      //  {
+      //ChatMessageContentPart.CreateTextPart(instructionHeader + "\n\n" + sbPrompt.ToString())
+      //});
 
-      var messages = new List<ChatMessage> { userMessage };
+      var userMessage = UserChatMessage.CreateUserMessage(new[]
+{
+    ChatMessageContentPart.CreateTextPart( sbPrompt.ToString())
+    });
+
+      var messages = new List<ChatMessage> { systemMessage, userMessage };
 
       var sb = new StringBuilder();
 

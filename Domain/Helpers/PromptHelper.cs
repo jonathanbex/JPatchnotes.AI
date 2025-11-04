@@ -49,6 +49,8 @@ Use these sections:
 Dont combine Author changes just pick one from a Summary
 
 At the end, include a fun summary of contributors if provided in the original texts. 
+
+Dont add any suggestion on what you can generate next.
 """;
 
     public static readonly string UserPrompt = """
@@ -82,6 +84,8 @@ At the end, include a fun summary of contributors if provided in the original te
       - Bug Fixes 🐛
 
       Do **not** include developer stats or internal changes. This is for external customers.
+
+      Dont add any suggestion on what you can generate next.
       """;
   }
 }
