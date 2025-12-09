@@ -90,9 +90,10 @@ namespace Domain.Services
       {
         EndUserId = "release-bot"
       };
+
       var systemMessage = SystemChatMessage.CreateSystemMessage(new[]
 {
-        ChatMessageContentPart.CreateTextPart(GetPrompt(patchNotePromptType, false))
+        ChatMessageContentPart.CreateTextPart(GetPrompt(patchNotePromptType, true))
     });
 
       var sbPrompt = new StringBuilder();
