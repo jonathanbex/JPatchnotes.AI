@@ -66,10 +66,11 @@ namespace Patchnotes.AI
       var owner = PromptInput("owner");
       var repo = PromptInput("repository name");
       var patchNoteTypeEnum = PromptPatchNoteType();
+      var generateFromRelease = PromptReleaseType();
       // Now it's input
       try
       {
-        var patchData = await _githubService.GeneratePatchData(owner, repo);
+        var patchData = await _githubService.GeneratePatchData(owner, repo, generateFromRelease);
         if (patchData.DiffFiles.Count() > 50)
         {
           var patchNoteChunks = new List<PatchNoteGeneratedResult>();
@@ -128,6 +129,21 @@ namespace Patchnotes.AI
       {
         "2" => PatchNotePromptType.UserFriendlyPrompt,
         _ => PatchNotePromptType.DeveloperFriendlyPrompt
+      };
+    }
+    ReleaseType PromptReleaseType()
+    {
+      Console.WriteLine("Select release type:");
+      Console.WriteLine("1 - From Release");
+      Console.WriteLine("2 - Latest Head");
+      Console.Write("Enter choice (default is 1): ");
+
+      var input = Console.ReadLine()?.Trim();
+
+      return input switch
+      {
+        "2" => ReleaseType.LatestHead,
+        _ => ReleaseType.FromRelease
       };
     }
   }
