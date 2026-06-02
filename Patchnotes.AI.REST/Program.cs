@@ -1,6 +1,6 @@
 using Domain.Services;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Patchnotes.AI.REST.Handler;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,23 +21,9 @@ builder.Services.AddSwaggerGen(c=> {
     Scheme = "basic",
     In = ParameterLocation.Header,
   });
-  c.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                      new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Basic"
-                            }
-                        },
-                        new string[] {}
-                }
-            });
 
 
-    var xmlDocPathRest = string.Format(@"{0}\Patchnotes.AI.REST.xml", System.AppDomain.CurrentDomain.BaseDirectory);
+  var xmlDocPathRest = string.Format(@"{0}\Patchnotes.AI.REST.xml", System.AppDomain.CurrentDomain.BaseDirectory);
 
   c.IncludeXmlComments(xmlDocPathRest);
 });
