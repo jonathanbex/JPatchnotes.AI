@@ -13,6 +13,11 @@ namespace Domain.Models.Enums
       DeveloperFriendlyPrompt = 0,
       UserFriendlyPrompt = 1,
     }
+    public enum ReleaseType
+    {
+      FromRelease = 0,
+      LatestHead = 1,
+    }
 
   }
 }

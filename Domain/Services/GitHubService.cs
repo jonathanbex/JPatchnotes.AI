@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static Azure.Core.HttpHeader;
+using static Domain.Models.Enums.Enums;
 
 namespace Domain.Services
 {
@@ -27,37 +28,14 @@ namespace Domain.Services
       };
     }
 
-    public async Task<List<string>> ListOwners()
-    {
-      var owners = new List<string>();
-
-      var currentUser = await _githubClient.User.Current();
-      owners.Add(currentUser.Login);
-
-      var organizations = await _githubClient.Organization.GetAllForCurrent();
-      owners.AddRange(organizations.Select(o => o.Login));
-
-      return owners;
-    }
-
-    public async Task<List<string>> ListRepos(string owner)
-    {
-      var repositories = await _githubClient.Repository.GetAllForCurrent();
-
-      return repositories
-        .Where(r => r.Owner.Login.Equals(owner, StringComparison.OrdinalIgnoreCase))
-        .Select(r => r.Name)
-        .ToList();
-    }
-
-    public async Task<ReleasePatchNoteBundle> GeneratePatchData(string owner, string repo, string? releaseId = null)
+    public async Task<ReleasePatchNoteBundle> GeneratePatchData(string owner, string repo, ReleaseType releaseType, string? releaseId = null)
     {
       Release? release = null;
       if (!string.IsNullOrWhiteSpace(releaseId))
       {
         if (Int64.TryParse(releaseId, out long parsedReleaseId)) release = await _githubClient.Repository.Release.Get(owner, repo, parsedReleaseId);
       }
-      if (release == null)
+      if (releaseType == ReleaseType.FromRelease && release == null)
       {
         try
         {
@@ -99,7 +77,7 @@ namespace Domain.Services
       var compare = await _githubClient.Repository.Commit.Compare(owner, repo, baseTag, headTag);
       //get sha for the commits, will be used later to fetch author info and changes connected to each author
       var commitShas = compare.Commits.Select(c => c.Sha).ToHashSet();
-      var commitMessages = compare.Commits.Select(x =>  x.Commit.Message ).Distinct().ToList();
+      var commitMessages = compare.Commits.Select(x => x.Commit.Message).Distinct().ToList();
       var allPrs = await _githubClient.Repository.PullRequest.GetAllForRepository(owner, repo,
           new PullRequestRequest { State = ItemStateFilter.Closed });
 
@@ -179,16 +157,19 @@ namespace Domain.Services
           firstCommitFiles.AddRange(splitFiles);
         }
 
-        foreach (var file in firstCommitPatch.Files)
+        if (firstCommitPatch.Parents?.Count < 2)
         {
-          string authorName = firstCommitPatch.Author.Login;
+          foreach (var file in firstCommitPatch.Files)
+          {
+            string authorName = firstCommitPatch.Author.Login;
 
 
-          int additions = file.Additions;
-          int deletions = file.Deletions;
+            int additions = file.Additions;
+            int deletions = file.Deletions;
 
-          // Update the author's commit history
-          AddOrUpdateAuthorHistory(authorCodeHistories, authorName, file.Filename, additions, deletions);
+            // Update the author's commit history
+            AddOrUpdateAuthorHistory(authorCodeHistories, authorName, file.Filename, additions, deletions);
+          }
         }
         diffFiles.InsertRange(0, firstCommitFiles);
       }
@@ -200,13 +181,17 @@ namespace Domain.Services
 
         var fullCommit = await _githubClient.Repository.Commit.Get(owner, repo, sha);
 
+        if (fullCommit.Parents?.Count > 1)
+          continue;
+
+
         var author = fullCommit.Author.Login;
         foreach (var file in fullCommit.Files)
         {
           // Skip files with no changes or if no patch is available
           if (string.IsNullOrWhiteSpace(file.Patch)) continue;
-          int additions = fullCommit.Stats.Additions;
-          int deletions = fullCommit.Stats.Deletions;
+          int additions = file.Additions;
+          int deletions = file.Deletions;
           AddOrUpdateAuthorHistory(authorCodeHistories, author, file.Filename, additions, deletions);
         }
 
@@ -251,7 +236,8 @@ namespace Domain.Services
           Name = authorName,
           Additions = additions,
           Deletions = deletions,
-          FilesChanged = 1
+          FilesChanged = 1,
+          FilesChangedList = new List<string> { fileName }
         });
       }
     }
@@ -285,7 +271,7 @@ namespace Domain.Services
         }
         result.Add(patchSplit);
       }
-     
+
       return result;
     }
 

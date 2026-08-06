@@ -33,7 +33,7 @@ namespace Patchnotes.AI.REST.Controllers
     {
       if (string.IsNullOrEmpty(generatePatchNotesRequest.Repo) || string.IsNullOrEmpty(generatePatchNotesRequest.Owner)) return BadRequest("Invalid body ,missing Repo or Owner");
 
-      var patchData = await _githubService.GeneratePatchData(generatePatchNotesRequest.Owner, generatePatchNotesRequest.Repo);
+      var patchData = await _githubService.GeneratePatchData(generatePatchNotesRequest.Owner, generatePatchNotesRequest.Repo,generatePatchNotesRequest.ReleaseType);
       if (patchData.DiffFiles.Count() > 50)
       {
         var patchNoteChunks = new List<PatchNoteGeneratedResult>();
