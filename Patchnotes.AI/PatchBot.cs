@@ -63,8 +63,8 @@ namespace Patchnotes.AI
 
     async Task GenerateDialogAndRun()
     {
-      var owner = PromptInput("owner");
-      var repo = PromptInput("repository name");
+      var owner = await SelectOwner();
+      var repo = await SelectRepository(owner);
       var patchNoteTypeEnum = PromptPatchNoteType();
       // Now it's input
       try
@@ -114,6 +114,81 @@ namespace Patchnotes.AI
         input = Console.ReadLine()?.Trim();
       }
       return input;
+    }
+
+    string PromptRequired(string label, string? defaultValue = null)
+    {
+      Console.Write(defaultValue != null ? $"{label} [{defaultValue}]: " : $"{label}: ");
+      var input = Console.ReadLine()?.Trim();
+      return string.IsNullOrWhiteSpace(input) ? (defaultValue ?? "") : input;
+    }
+
+    async Task<string> SelectOwner()
+    {
+      var listOwners = PromptRequired("List owners (y/n)", "n");
+      if (listOwners.Equals("y", StringComparison.OrdinalIgnoreCase))
+      {
+        var owners = await _githubService.ListOwners();
+
+        if (owners.Count > 0)
+        {
+          Console.WriteLine("Owners:");
+          for (int i = 0; i < owners.Count; i++)
+          {
+            Console.WriteLine($"{i + 1}: {owners[i]}");
+          }
+
+          Console.WriteLine();
+          Console.Write("Select owner by number, or press Enter to type manually: ");
+          var selection = Console.ReadLine();
+
+          if (!string.IsNullOrWhiteSpace(selection) &&
+              int.TryParse(selection, out var index) &&
+              index >= 1 &&
+              index <= owners.Count)
+          {
+            var selectedOwner = owners[index - 1];
+            Console.WriteLine($"Selected: {selectedOwner}");
+            return selectedOwner;
+          }
+        }
+      }
+
+      return PromptInput("owner");
+    }
+
+    async Task<string> SelectRepository(string owner)
+    {
+      var listRepos = PromptRequired("List repos (y/n)", "n");
+      if (listRepos.Equals("y", StringComparison.OrdinalIgnoreCase))
+      {
+        var repositories = await _githubService.ListRepos(owner);
+
+        if (repositories.Count > 0)
+        {
+          Console.WriteLine("Repos:");
+          for (int i = 0; i < repositories.Count; i++)
+          {
+            Console.WriteLine($"{i + 1}: {repositories[i]}");
+          }
+
+          Console.WriteLine();
+          Console.Write("Select repo by number, or press Enter to type manually: ");
+          var selection = Console.ReadLine();
+
+          if (!string.IsNullOrWhiteSpace(selection) &&
+              int.TryParse(selection, out var index) &&
+              index >= 1 &&
+              index <= repositories.Count)
+          {
+            var selectedRepo = repositories[index - 1];
+            Console.WriteLine($"Selected: {selectedRepo}");
+            return selectedRepo;
+          }
+        }
+      }
+
+      return PromptInput("repository name");
     }
     PatchNotePromptType PromptPatchNoteType()
     {
