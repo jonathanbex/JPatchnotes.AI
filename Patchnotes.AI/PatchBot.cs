@@ -61,6 +61,7 @@ namespace Patchnotes.AI
       }
     }
 
+
     async Task GenerateDialogAndRun()
     {
       var owner = await SelectOwner();
