@@ -28,6 +28,29 @@ namespace Domain.Services
       };
     }
 
+    public async Task<List<string>> ListOwners()
+    {
+      var owners = new List<string>();
+
+      var currentUser = await _githubClient.User.Current();
+      owners.Add(currentUser.Login);
+
+      var organizations = await _githubClient.Organization.GetAllForCurrent();
+      owners.AddRange(organizations.Select(o => o.Login));
+
+      return owners;
+    }
+
+    public async Task<List<string>> ListRepos(string owner)
+    {
+      var repositories = await _githubClient.Repository.GetAllForCurrent();
+
+      return repositories
+        .Where(r => r.Owner.Login.Equals(owner, StringComparison.OrdinalIgnoreCase))
+        .Select(r => r.Name)
+        .ToList();
+    }
+
     public async Task<ReleasePatchNoteBundle> GeneratePatchData(string owner, string repo, ReleaseType releaseType, string? releaseId = null)
     {
       Release? release = null;
