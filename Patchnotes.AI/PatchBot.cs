@@ -6,6 +6,7 @@ using Patchnotes.AI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -84,11 +85,13 @@ namespace Patchnotes.AI
 
           var finalNotes = await _openAIService.GeneratePatchNotesFromCombined(patchNoteChunks, patchNoteTypeEnum);
           LogCosts(finalNotes);
+          PromptSaveToFile(finalNotes, repo);
         }
         else
         {
           var patchNote = await _openAIService.GeneratePatchNotesAsync(patchData, patchNoteTypeEnum);
           LogCosts(patchNote);
+          PromptSaveToFile(patchNote, repo);
         }
       }
       catch (Exception ex)
@@ -104,6 +107,34 @@ namespace Patchnotes.AI
       Console.WriteLine("🎉 Patchnote generation complete!");
       Console.WriteLine($"🧾 Total cost: {patchNote.Cost.ToString("C3", CultureInfo.CreateSpecificCulture("en-US"))} USD");
       Console.WriteLine();
+    }
+
+    void PromptSaveToFile(PatchNoteGeneratedResult patchNote, string repo)
+    {
+      Console.WriteLine("The console doesn't render emojis/special characters well.");
+      var save = PromptRequired("Save patch notes to a file? (y/n)", "n");
+      if (!save.Equals("y", StringComparison.OrdinalIgnoreCase) && !save.Equals("yes", StringComparison.OrdinalIgnoreCase))
+      {
+        return;
+      }
+
+      var downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+      var defaultFolder = Directory.Exists(downloadsPath)
+        ? downloadsPath
+        : Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+      var defaultFileName = Path.Combine(defaultFolder, $"{repo}-patchnotes-{DateTime.Now:yyyy-MM-dd-HHmmss}.md");
+      var fileName = PromptRequired("File path", defaultFileName);
+
+      try
+      {
+        var fullPath = Path.GetFullPath(fileName);
+        File.WriteAllText(fullPath, patchNote.PatchNotes, Encoding.UTF8);
+        Console.WriteLine($"Patch notes saved to: {fullPath}");
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Failed to save patch notes to file: {ex.Message}");
+      }
     }
 
     string PromptInput(string label)
